@@ -1,0 +1,1 @@
+Gradient descent is a popular optimization algorithm used in machine learning. It minimizes the loss function.

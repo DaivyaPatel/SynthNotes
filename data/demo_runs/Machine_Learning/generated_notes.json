@@ -1,0 +1,19 @@
+{
+  "detailed_explanation": [
+    {
+      "statement": "This is a demo generated explanation.",
+      "source_ids": [
+        "S1",
+        "S2"
+      ]
+    }
+  ],
+  "revision_notes": [
+    {
+      "bullet": "Demo bullet point.",
+      "source_ids": [
+        "S1"
+      ]
+    }
+  ]
+}

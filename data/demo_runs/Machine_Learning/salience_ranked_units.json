@@ -1,0 +1,62 @@
+[
+  {
+    "text": "Gradient descent is a popular optimization algorithm used in machine learning.",
+    "source_ids": [
+      "S1"
+    ],
+    "position_in_doc": {
+      "S1": 0
+    },
+    "salience_score": 1.0,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 1.0,
+      "emphasis": 1.0
+    }
+  },
+  {
+    "text": "Steepest descent is an optimization algorithm.",
+    "source_ids": [
+      "S2"
+    ],
+    "position_in_doc": {
+      "S2": 0
+    },
+    "salience_score": 0.9,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 1.0,
+      "emphasis": 0.5
+    }
+  },
+  {
+    "text": "It minimizes the loss function.",
+    "source_ids": [
+      "S1"
+    ],
+    "position_in_doc": {
+      "S1": 1
+    },
+    "salience_score": 0.8727,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 0.9091,
+      "emphasis": 0.5
+    }
+  },
+  {
+    "text": "Backpropagation calculates the gradients.",
+    "source_ids": [
+      "S2"
+    ],
+    "position_in_doc": {
+      "S2": 1
+    },
+    "salience_score": 0.8727,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 0.9091,
+      "emphasis": 0.5
+    }
+  }
+]

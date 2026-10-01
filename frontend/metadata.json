@@ -1,0 +1,6 @@
+{
+  "name": "SynthNotes",
+  "description": "SynthNotes — Multiple Sources. One Clear Note. Reconciles textbooks, notes, and slides into one unified, exam-ready study document with source attribution and faithfulness verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

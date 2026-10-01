@@ -1,0 +1,28 @@
+{
+  "quiz": [
+    {
+      "type": "mcq",
+      "question": "Demo Q1?",
+      "options": [
+        "A",
+        "B"
+      ],
+      "answer": "A"
+    },
+    {
+      "type": "fill_in_the_blank",
+      "question": "Demo Q2?",
+      "answer": "Demo"
+    },
+    {
+      "type": "short_answer",
+      "question": "Demo Q3?",
+      "answer": "Demo"
+    },
+    {
+      "type": "long_answer",
+      "question": "Demo Q4?",
+      "answer": "Demo"
+    }
+  ]
+}

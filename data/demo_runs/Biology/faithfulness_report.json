@@ -1,0 +1,23 @@
+{
+  "overall_score": -0.3994392640888691,
+  "flagged_statements": [
+    {
+      "statement": "This is a demo generated explanation.",
+      "cited_sources": [
+        "S1",
+        "S2"
+      ],
+      "score": -0.15458930656313896,
+      "reason": "Low entailment or high contradiction detected."
+    },
+    {
+      "statement": "Demo bullet point.",
+      "cited_sources": [
+        "S1"
+      ],
+      "score": -0.6442892216145992,
+      "reason": "Low entailment or high contradiction detected."
+    }
+  ],
+  "statements_evaluated": 2
+}

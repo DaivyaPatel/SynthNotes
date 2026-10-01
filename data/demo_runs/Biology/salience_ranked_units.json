@@ -1,0 +1,62 @@
+[
+  {
+    "text": "Photosynthesis is a process used by plants.",
+    "source_ids": [
+      "S1"
+    ],
+    "position_in_doc": {
+      "S1": 0
+    },
+    "salience_score": 1.0,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 1.0,
+      "emphasis": 1.0
+    }
+  },
+  {
+    "text": "Chlorophyll absorbs light.",
+    "source_ids": [
+      "S2"
+    ],
+    "position_in_doc": {
+      "S2": 0
+    },
+    "salience_score": 0.9,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 1.0,
+      "emphasis": 0.5
+    }
+  },
+  {
+    "text": "It converts light energy into chemical energy.",
+    "source_ids": [
+      "S1"
+    ],
+    "position_in_doc": {
+      "S1": 1
+    },
+    "salience_score": 0.8727,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 0.9091,
+      "emphasis": 0.5
+    }
+  },
+  {
+    "text": "Photosynthesis creates oxygen as a byproduct.",
+    "source_ids": [
+      "S2"
+    ],
+    "position_in_doc": {
+      "S2": 1
+    },
+    "salience_score": 0.8727,
+    "score_components": {
+      "repetition": 1.0,
+      "position": 0.9091,
+      "emphasis": 0.5
+    }
+  }
+]
