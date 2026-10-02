@@ -28,11 +28,7 @@ export const SourceUploader: React.FC = () => {
     setActiveNav,
   } = useSession();
 
-  const [files, setFiles] = useState<{ name: string; size: number; type?: string }[]>([
-    { name: 'ml_textbook_ch4_optimization.pdf', size: 3240000, type: 'pdf' },
-    { name: 'mit_lecture_gradient_methods.pdf', size: 980000, type: 'pdf' },
-    { name: 'cs229_optimization_slides.pdf', size: 1450000, type: 'pdf' },
-  ]);
+  const [files, setFiles] = useState<File[]>([]);
 
   const [customTopicTitle, setCustomTopicTitle] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -42,12 +38,7 @@ export const SourceUploader: React.FC = () => {
   const [simulatedScenario, setSimulatedScenario] = useState<'valid' | 'low_overlap' | 'extraction_failure'>('valid');
 
   const handleFilesAdded = (newFiles: File[]) => {
-    const formatted = newFiles.map((f) => ({
-      name: f.name,
-      size: f.size,
-      type: f.name.split('.').pop()?.toLowerCase() || 'pdf',
-    }));
-    const combined = [...files, ...formatted];
+    const combined = [...files, ...newFiles];
     setFiles(combined);
 
     if (!customTopicTitle && newFiles[0]) {
@@ -64,7 +55,11 @@ export const SourceUploader: React.FC = () => {
     const preset = MOCK_PRESET_SESSIONS.find((p) => p.topicId === presetId);
     if (preset) {
       setCustomTopicTitle(preset.title);
-      setFiles(preset.sources.map((s) => ({ name: s.filename, size: s.size, type: s.type })));
+      setFiles(
+        preset.sources.map(
+          (s) => new File(['(Mock content)'], s.filename, { type: 'text/plain' })
+        )
+      );
       setValidationErrors([]);
     }
   };
@@ -72,7 +67,8 @@ export const SourceUploader: React.FC = () => {
   const handleAddUrl = () => {
     if (urlInput.trim()) {
       const name = urlInput.replace(/^https?:\/\//, '').split('/')[0] + '_article.pdf';
-      setFiles([...files, { name, size: 750000, type: 'pdf' }]);
+      const dummyUrlFile = new File(['(Mock URL content)'], name, { type: 'text/plain' });
+      setFiles([...files, dummyUrlFile]);
       setUrlInput('');
       setShowUrlModal(false);
     }

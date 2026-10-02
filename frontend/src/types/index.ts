@@ -170,6 +170,7 @@ export interface UserQuizAnswer {
 
 export interface SessionRecord {
   session_id: string;
+  user_id?: string;
   title: string;
   sources: StudySource[];
   validation: ValidationResult;

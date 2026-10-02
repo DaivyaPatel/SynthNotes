@@ -36,7 +36,7 @@ interface SessionContextType {
   setActiveNav: (nav: string) => void;
   loadSessions: () => Promise<void>;
   selectSession: (sessionId: string) => Promise<void>;
-  createSessionWithFiles: (files: { name: string; size: number; type?: string }[], title?: string) => Promise<string>;
+  createSessionWithFiles: (files: File[], title?: string) => Promise<string>;
   validateSources: (scenario?: 'valid' | 'low_overlap' | 'extraction_failure') => Promise<ValidationResult>;
   startProcessingPipeline: () => Promise<void>;
   updateFlaggedStatement: (flaggedId: string, action: 'regenerate' | 'remove' | 'keep') => Promise<void>;
@@ -98,7 +98,10 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Accounts state
   const [accounts, setAccounts] = useState<UserAccount[]>(DEFAULT_ACCOUNTS);
-  const [currentAccount, setCurrentAccount] = useState<UserAccount>(DEFAULT_ACCOUNTS[0]);
+  const [currentAccount, setCurrentAccount] = useState<UserAccount>(() => {
+    const saved = localStorage.getItem('synthnotes_user_id');
+    return DEFAULT_ACCOUNTS.find(a => a.id === saved) || DEFAULT_ACCOUNTS[0];
+  });
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   const loadSessions = async () => {
@@ -145,7 +148,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const createSessionWithFiles = async (
-    files: { name: string; size: number; type?: string }[],
+    files: File[],
     title?: string
   ): Promise<string> => {
     const res = await sessionApi.createSession(files, title);
@@ -180,43 +183,50 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     setPipelineProgress(5);
     setCompletedStages([]);
 
-    const stageKeys: PipelineStageKey[] = [
-      'ingestion',
-      'terminology_normalization',
-      'salience_ranking',
-      'generation',
-      'faithfulness_verification',
-    ];
+    try {
+      await sessionApi.triggerPipeline(currentSessionId);
 
-    for (let i = 0; i < stageKeys.length; i++) {
-      const current = stageKeys[i];
-      setPipelineStage(current);
-      const statusRes = await sessionApi.getPipelineStatus(currentSessionId, i);
-      setPipelineStatusMessage(statusRes.currentMessage);
-      setPipelineProgress(Math.round(((i + 0.8) / stageKeys.length) * 100));
+      let isDone = false;
+      while (!isDone) {
+        const statusRes = await sessionApi.getPipelineStatus(currentSessionId);
+        
+        setPipelineStage(statusRes.stage);
+        setCompletedStages(statusRes.stages_completed);
+        setPipelineProgress(statusRes.progressPercent);
+        setPipelineStatusMessage(statusRes.currentMessage);
 
-      await new Promise((r) => setTimeout(r, 700));
+        if (statusRes.status === 'completed' || statusRes.status === 'failed') {
+          isDone = true;
+          if (statusRes.status === 'failed') {
+            console.error("Pipeline failed on backend");
+            setIsProcessing(false);
+            return;
+          }
+        } else {
+          await new Promise((r) => setTimeout(r, 1000)); // Poll every 1s
+        }
+      }
 
-      setCompletedStages((prev) => [...prev, current]);
-      setPipelineProgress(Math.round(((i + 1) / stageKeys.length) * 100));
+      // We will leave the mocked notes and quiz fetching intact for now until T-18 and T-19
+      const notes = await notesApi.getNotes(currentSessionId);
+      setCurrentNotes(notes);
+      const quiz = await quizApi.getOrGenerateQuiz(currentSessionId);
+      setCurrentQuiz(quiz);
+
+      if (currentSession) {
+        currentSession.status = 'completed';
+        currentSession.notes = notes;
+        currentSession.quiz = quiz;
+        currentSession.faithfulness_score = notes.faithfulness?.overall_score || 0;
+        sessionApi.saveSession(currentSession);
+      }
+    } catch (e) {
+      console.error("Pipeline error:", e);
+    } finally {
+      setIsProcessing(false);
+      await loadSessions();
+      setActiveNav('notes');
     }
-
-    const notes = await notesApi.getNotes(currentSessionId);
-    setCurrentNotes(notes);
-    const quiz = await quizApi.getOrGenerateQuiz(currentSessionId);
-    setCurrentQuiz(quiz);
-
-    if (currentSession) {
-      currentSession.status = 'completed';
-      currentSession.notes = notes;
-      currentSession.quiz = quiz;
-      currentSession.faithfulness_score = notes.faithfulness.overall_score;
-      sessionApi.saveSession(currentSession);
-    }
-
-    setIsProcessing(false);
-    await loadSessions();
-    setActiveNav('notes');
   };
 
   const updateFlaggedStatement = async (
@@ -246,12 +256,16 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     const acc = accounts.find((a) => a.id === accountId);
     if (acc) {
       setCurrentAccount(acc);
+      localStorage.setItem('synthnotes_user_id', acc.id);
+      loadSessions(); // Reload sessions for this new user
     }
   };
 
   const addNewAccount = (acc: UserAccount) => {
     setAccounts((prev) => [...prev, acc]);
     setCurrentAccount(acc);
+    localStorage.setItem('synthnotes_user_id', acc.id);
+    loadSessions();
   };
 
   return (

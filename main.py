@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
@@ -36,7 +36,7 @@ create_tables(engine)
 job_status = {}
 
 @app.post("/sessions")
-async def create_session(files: List[UploadFile] = File(...)):
+async def create_session(files: List[UploadFile] = File(...), x_user_id: str = Header(None)):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
         
@@ -58,7 +58,7 @@ async def create_session(files: List[UploadFile] = File(...)):
                 
             file_paths.append(str(temp_path))
             
-        session_id = create_session_and_register_files(engine, "data/uploads", file_paths)
+        session_id = create_session_and_register_files(engine, "data/uploads", file_paths, x_user_id)
     finally:
         # clean up temp dir files
         for p in file_paths:

@@ -1,6 +1,35 @@
+# Python
 venv/
+.venv/
+env/
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Node / React (Frontend)
+frontend/node_modules/
+node_modules/
+dist/
+build/
+.npm/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/synthnotes.db
+
+# Environment variables
 .env
+.env.local
+
+# Application Data
 data/uploads/*
 !data/uploads/.gitkeep
-.pytest_cache/
+
+# IDEs and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -6,19 +6,33 @@ import {
   ValidationResult,
 } from '../types';
 import { INITIAL_PRESET_SESSIONS } from './mockData';
+import { fetchApi } from './api';
 
 const STORAGE_KEY = 'synthnotes_sessions_v1';
 
 function getStoredSessions(): SessionRecord[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+    const userId = localStorage.getItem('synthnotes_user_id') || 'acc_rohan';
+    let allSessions = [];
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_PRESET_SESSIONS));
-      return INITIAL_PRESET_SESSIONS;
+      allSessions = INITIAL_PRESET_SESSIONS.map(s => ({ ...s, user_id: 'acc_rohan' }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+    } else {
+      allSessions = JSON.parse(raw);
     }
-    return JSON.parse(raw);
+    return allSessions.filter((s: SessionRecord) => s.user_id === userId);
   } catch {
     return INITIAL_PRESET_SESSIONS;
+  }
+}
+
+function getAllStoredSessions(): SessionRecord[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : INITIAL_PRESET_SESSIONS.map(s => ({ ...s, user_id: 'acc_rohan' }));
+  } catch {
+    return [];
   }
 }
 
@@ -43,24 +57,34 @@ export const sessionApi = {
   },
 
   async createSession(
-    files: { name: string; size: number; type?: string }[],
+    files: File[],
     topicTitle?: string
   ): Promise<{ session_id: string; sources: StudySource[] }> {
-    await new Promise((r) => setTimeout(r, 350));
-    const sessionId = `sn_${Date.now()}`;
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    // Make the POST request to our FastAPI backend
+    const data = await fetchApi<{ session_id: string }>('/sessions', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const sessionId = data.session_id;
+
+    // Build standard sources array for UI rendering
     const sources: StudySource[] = files.map((f, idx) => ({
       source_id: `S${idx + 1}`,
       filename: f.name,
       size: f.size,
       type: f.name.split('.').pop()?.toLowerCase() || 'pdf',
       status: 'ready',
-      wordCount: Math.round(3000 + Math.random() * 6000),
+      wordCount: Math.round(3000 + Math.random() * 6000), // Mocks to preserve UI layout
       contributionPercent: Math.round(100 / files.length),
     }));
 
     const inferredTitle =
       topicTitle ||
-      files[0].name
+      files[0]?.name
         .replace(/\.[^/.]+$/, '')
         .replace(/[-_]/g, ' ')
         .replace(/(chapter|ch\d+|notes|slides|textbook)/gi, '')
@@ -69,6 +93,7 @@ export const sessionApi = {
 
     const newRecord: SessionRecord = {
       session_id: sessionId,
+      user_id: localStorage.getItem('synthnotes_user_id') || 'acc_rohan',
       title: inferredTitle.charAt(0).toUpperCase() + inferredTitle.slice(1),
       sources,
       created_at: new Date().toISOString(),
@@ -81,8 +106,8 @@ export const sessionApi = {
       },
     };
 
-    const current = getStoredSessions();
-    saveStoredSessions([newRecord, ...current]);
+    const currentAll = getAllStoredSessions();
+    saveStoredSessions([newRecord, ...currentAll]);
 
     return { session_id: sessionId, sources };
   },
@@ -130,24 +155,34 @@ export const sessionApi = {
     if (session) {
       session.validation = result;
       session.status = result.valid ? 'validated' : 'error';
-      saveStoredSessions(sessions);
+      this.saveSession(session);
     }
 
     return result;
   },
 
-  async triggerPipeline(sessionId: string): Promise<{ job_id: string; status: string }> {
-    await new Promise((r) => setTimeout(r, 200));
-    return {
-      job_id: `job_${Date.now()}`,
-      status: 'queued',
-    };
+  async triggerPipeline(sessionId: string): Promise<{ status_url: string }> {
+    return await fetchApi<{ status_url: string }>(`/sessions/${sessionId}/process`, {
+      method: 'POST',
+    });
   },
 
   async getPipelineStatus(
-    sessionId: string,
-    currentStepIndex: number
+    sessionId: string
   ): Promise<PipelineStatusResponse> {
+    const data = await fetchApi<{ stage: string; status: string }>(`/sessions/${sessionId}/status`);
+    
+    const backendToFrontendStage: Record<string, PipelineStageKey> = {
+      'ingestion': 'ingestion',
+      'normalization': 'terminology_normalization',
+      'salience': 'salience_ranking',
+      'generation': 'generation',
+      'faithfulness': 'faithfulness_verification',
+      'queued': 'ingestion',
+    };
+
+    const currentKey = backendToFrontendStage[data.stage] || 'ingestion';
+
     const stages: PipelineStageKey[] = [
       'ingestion',
       'terminology_normalization',
@@ -156,9 +191,15 @@ export const sessionApi = {
       'faithfulness_verification',
     ];
 
-    const currentKey = stages[Math.min(currentStepIndex, stages.length - 1)];
+    const currentStepIndex = stages.indexOf(currentKey);
     const completedStages = stages.slice(0, currentStepIndex);
-    const progressPercent = Math.min(100, Math.round(((currentStepIndex + 1) / stages.length) * 100));
+    
+    let progressPercent = 0;
+    if (data.status === 'completed') {
+      progressPercent = 100;
+    } else if (currentStepIndex >= 0) {
+      progressPercent = Math.min(95, Math.round(((currentStepIndex + 0.5) / stages.length) * 100));
+    }
 
     const messages: Record<PipelineStageKey, string> = {
       ingestion: 'Extracting text and identifying document sections...',
@@ -170,15 +211,15 @@ export const sessionApi = {
 
     return {
       stage: currentKey,
-      stages_completed: completedStages,
-      status: currentStepIndex >= stages.length ? 'completed' : 'in_progress',
+      stages_completed: data.status === 'completed' ? stages : completedStages,
+      status: data.status as 'pending' | 'in_progress' | 'completed' | 'failed',
       progressPercent,
       currentMessage: messages[currentKey] || 'Processing...',
     };
   },
 
   saveSession(session: SessionRecord) {
-    const current = getStoredSessions();
+    const current = getAllStoredSessions();
     const idx = current.findIndex((s) => s.session_id === session.session_id);
     if (idx >= 0) {
       current[idx] = session;

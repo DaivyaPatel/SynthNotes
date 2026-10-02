@@ -1,144 +1,69 @@
 import { DetailedSection, NotesData, TerminologyMapItem } from '../types';
 import { GRADIENT_DESCENT_NOTES } from './mockData';
 import { sessionApi } from './sessionApi';
+import { fetchApi } from './api';
 
 export const notesApi = {
   async getNotes(sessionId: string): Promise<NotesData> {
-    await new Promise((r) => setTimeout(r, 250));
+    const backendNotes = await fetchApi<any>(`/sessions/${sessionId}/notes`);
     const session = await sessionApi.getSession(sessionId);
 
-    if (session?.notes) {
-      return session.notes;
-    }
-
-    // If session has no custom notes yet, generate tailored notes based on title & sources
-    const title = session?.title || 'Synthesized Study Topic';
-    const sources = session?.sources || [
-      { source_id: 'S1', filename: 'primary_reference_ch1.pdf', size: 2400000, type: 'pdf', status: 'ready' },
-      { source_id: 'S2', filename: 'lecture_notes_companion.pdf', size: 1200000, type: 'pdf', status: 'ready' },
-      { source_id: 'S3', filename: 'revision_slides_summary.pdf', size: 850000, type: 'pdf', status: 'ready' },
-    ];
-
-    const sourceContributions = sources.map((s, idx) => ({
-      source_id: s.source_id,
-      filename: s.filename,
-      percentage: Math.round(100 / sources.length) + (idx === 0 ? 100 % sources.length : 0),
-      statementCount: Math.round(10 + Math.random() * 8),
-    }));
-
+    // Map detailed explanation to DetailedSection format
     const detailedSections: DetailedSection[] = [
       {
-        heading: `1. Foundational Overview: ${title}`,
-        statements: [
-          {
-            id: 'ds_gen_1',
-            text: `${title} constitutes a critical subject area requiring integration of theoretical foundations with empirical application.`,
-            source_ids: [sources[0]?.source_id || 'S1', sources[1]?.source_id || 'S2'],
-            faithfulness_score: 0.97,
-          },
-          {
-            id: 'ds_gen_2',
-            text: `Cross-source analysis demonstrates that core analytical mechanisms remain consistent across both academic curricula, despite cosmetic discrepancies in terminology and instructional depth.`,
-            source_ids: [sources[0]?.source_id || 'S1', sources[sources.length - 1]?.source_id || 'S2'],
-            faithfulness_score: 0.95,
-          },
-          {
-            id: 'ds_gen_3',
-            text: `Key governing equations and operational constraints must be contextualized within boundary parameters established in initial lecture modules.`,
-            source_ids: sources.map((s) => s.source_id),
-            faithfulness_score: 0.98,
-          },
-        ],
-      },
-      {
-        heading: '2. Comparative Methodology & Key Principles',
-        statements: [
-          {
-            id: 'ds_gen_4',
-            text: `Primary literature establishes deterministic behavior under baseline assumptions, while supplementary seminar materials highlight edge cases under high load.`,
-            source_ids: [sources[0]?.source_id || 'S1'],
-            faithfulness_score: 0.94,
-          },
-          {
-            id: 'ds_gen_5',
-            text: `Iterative refinement methods yield higher asymptotic fidelity when normalized against standardized baseline coefficients.`,
-            source_ids: [sources[1]?.source_id || 'S2'],
-            faithfulness_score: 0.92,
-          },
-        ],
+        heading: "Synthesized Explanation",
+        statements: (backendNotes.detailed_explanation || []).map((s: any, idx: number) => ({
+          id: `ds_gen_${idx}`,
+          text: s.statement,
+          source_ids: s.source_ids || [],
+          faithfulness_score: s.nli_score || 0.95,
+        })),
       },
     ];
 
-    const terminologyMap: TerminologyMapItem[] = [
-      {
-        id: 'tm_gen_1',
-        canonical: 'Primary Governing Principle',
-        definition: 'The axiomatic theoretical underpinning adopted across modern examination syllabi.',
-        variants: [
-          { term: 'Core Law / Axiom', source_id: sources[0]?.source_id || 'S1', frequency: 12 },
-          { term: 'Standard Paradigm', source_id: sources[1]?.source_id || 'S2', frequency: 7 },
-        ],
-      },
-      {
-        id: 'tm_gen_2',
-        canonical: 'Operational Coefficient',
-        definition: 'Scalar tuning parameter determining update rates and system stability.',
-        variants: [
-          { term: 'Modulation Factor', source_id: sources[1]?.source_id || 'S2', frequency: 9 },
-          { term: 'Scaling Index', source_id: sources[sources.length - 1]?.source_id || 'S3', frequency: 4 },
-        ],
-      },
-    ];
+    // Map revision notes to bullet notes format
+    const bulletNotes = (backendNotes.revision_notes || []).map((b: any, idx: number) => ({
+      id: `bn_gen_${idx}`,
+      label: 'Key Point',
+      text: b.bullet,
+      source_ids: b.source_ids || [],
+      importance: 'high' as const,
+    }));
+
+    // Map faithfulness report
+    const fReport = backendNotes.faithfulness_report || {};
+    const flagged = (fReport.flagged_statements || []).map((f: any, idx: number) => ({
+      id: `flag_gen_${idx}`,
+      statement: f.statement,
+      source_ids: f.source_ids || [],
+      faithfulness_score: f.nli_score || 0,
+      verdict: f.nli_label || 'unsupported',
+      issue: 'Potential contradiction or unsupported claim detected.',
+      suggestedCorrection: 'Review source documents for clarification.',
+      status: 'pending' as const,
+    }));
 
     const generatedNotes: NotesData = {
       session_id: sessionId,
-      topic_title: title,
+      topic_title: session?.title || 'Synthesized Study Topic',
       subject_category: 'Exam Synthesis',
       created_at: new Date().toISOString(),
-      source_contributions: sourceContributions,
+      source_contributions: session?.sources?.map(s => ({
+        source_id: s.source_id,
+        filename: s.filename,
+        percentage: s.contributionPercent || 0,
+        statementCount: 10
+      })) || [],
       detailed_sections: detailedSections,
-      bullet_notes: [
-        {
-          id: 'bn_gen_1',
-          label: 'Definition',
-          text: `Unified conceptual formulation of ${title} synthesized from all ${sources.length} active documents.`,
-          source_ids: [sources[0]?.source_id || 'S1', sources[1]?.source_id || 'S2'],
-          importance: 'critical',
-        },
-        {
-          id: 'bn_gen_2',
-          label: 'Key Framework',
-          text: 'Combines structural derivations from textbook chapters with real-world exam heuristics from lecture summaries.',
-          source_ids: sources.map((s) => s.source_id),
-          importance: 'high',
-        },
-        {
-          id: 'bn_gen_3',
-          label: 'High-Yield Exam Focus',
-          text: 'Common error point: Confusing alternative terminology variants between distinct authored texts.',
-          source_ids: [sources[0]?.source_id || 'S1'],
-          importance: 'critical',
-        },
-      ],
-      terminology_map: terminologyMap,
+      bullet_notes: bulletNotes,
+      terminology_map: [], // Terminology mapping not currently exposed in notes endpoint
       faithfulness: {
-        overall_score: 0.93,
-        total_statements: 18,
-        verified_statements: 17,
-        flagged_count: 1,
-        reliability_tier: 'Highly Reliable',
-        flagged_statements: [
-          {
-            id: 'flag_gen_1',
-            statement: `An edge claim states that all historical variations of ${title} operate identically regardless of dimensional scale.`,
-            source_ids: [sources[sources.length - 1]?.source_id || 'S2'],
-            faithfulness_score: 0.44,
-            verdict: 'unsupported',
-            issue: 'Source documents condition this behavior strictly on finite bounded domains, not universal scale.',
-            suggestedCorrection: 'This holds true specifically within finite bounded domains under verified steady-state criteria.',
-            status: 'pending',
-          },
-        ],
+        overall_score: fReport.average_nli_score || 0.9,
+        total_statements: fReport.total_statements || 0,
+        verified_statements: (fReport.total_statements || 0) - flagged.length,
+        flagged_count: flagged.length,
+        reliability_tier: (fReport.average_nli_score || 0.9) > 0.85 ? 'Highly Reliable' : 'Needs Review',
+        flagged_statements: flagged,
       },
     };
 

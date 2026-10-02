@@ -12,6 +12,7 @@ Base = declarative_base()
 class SessionModel(Base):
     __tablename__ = 'sessions'
     id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     documents = relationship("SourceDocument", back_populates="session", cascade="all, delete")
 
@@ -40,7 +41,7 @@ def create_tables(engine):
     Base.metadata.create_all(engine)
 
 
-def create_session_and_register_files(engine, upload_dir: str, file_paths: list[str]) -> str:
+def create_session_and_register_files(engine, upload_dir: str, file_paths: list[str], user_id: str = None) -> str:
     """
     Creates a new session, copies files to the session directory, and registers metadata in SQLite.
     Returns the session_id.
@@ -52,7 +53,7 @@ def create_session_and_register_files(engine, upload_dir: str, file_paths: list[
         session_dir = Path(upload_dir) / session_id
         session_dir.mkdir(parents=True, exist_ok=True)
         
-        new_session = SessionModel(id=session_id)
+        new_session = SessionModel(id=session_id, user_id=user_id)
         db.add(new_session)
         
         for i, path_str in enumerate(file_paths):
