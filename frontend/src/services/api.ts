@@ -21,7 +21,7 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     headers.set('X-User-Id', userId);
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     
     const response = await fetch(url, { ...options, headers, signal: controller.signal });
     clearTimeout(timeoutId);
