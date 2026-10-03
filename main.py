@@ -17,15 +17,11 @@ from quiz import generate_quiz
 app = FastAPI(title="SynthNotes API")
 
 # CORS setup per Security doc
-origins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    os.getenv("FRONTEND_URL", "http://localhost:8000")
-]
+origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
