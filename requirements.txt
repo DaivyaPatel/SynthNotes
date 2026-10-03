@@ -1,12 +1,6 @@
 fastapi
 uvicorn[standard]
 pdfplumber
-spacy
-sentence-transformers
-scikit-learn
-numpy
-transformers
-torch
 sqlalchemy
 python-dotenv
 pytest
