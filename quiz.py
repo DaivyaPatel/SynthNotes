@@ -25,25 +25,36 @@ Output your response STRICTLY as a JSON object matching this schema exactly, wit
 {{
     "quiz": [
         {{
+            "id": "q1",
             "type": "mcq",
             "question": "...",
             "options": ["A", "B", "C", "D"],
-            "answer": "A"
+            "correct_answer": "A",
+            "explanation": "..."
         }},
         {{
+            "id": "q2",
             "type": "fill_in_the_blank",
             "question": "...",
-            "answer": "..."
+            "correct_answer": "...",
+            "acceptable_alternatives": ["...", "..."],
+            "explanation": "..."
         }},
         {{
+            "id": "q3",
             "type": "short_answer",
             "question": "...",
-            "answer": "..."
+            "sample_answer": "...",
+            "key_points": ["...", "..."],
+            "explanation": "..."
         }},
         {{
+            "id": "q4",
             "type": "long_answer",
             "question": "...",
-            "answer": "..."
+            "sample_answer": "...",
+            "key_points": ["...", "..."],
+            "explanation": "..."
         }}
     ]
 }}

@@ -20,11 +20,7 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     const headers = new Headers(options?.headers);
     headers.set('X-User-Id', userId);
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-    
-    const response = await fetch(url, { ...options, headers, signal: controller.signal });
-    clearTimeout(timeoutId);
+    const response = await fetch(url, { ...options, headers });
     
     const text = await response.text();
     let data;
