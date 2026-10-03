@@ -13,24 +13,26 @@ const STORAGE_KEY = 'synthnotes_sessions_v1';
 function getStoredSessions(): SessionRecord[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const userId = localStorage.getItem('synthnotes_user_id') || 'acc_rohan';
+    const userId = sessionStorage.getItem('synthnotes_user_id') || 'acc_rohan';
     let allSessions = [];
-    if (!raw) {
-      allSessions = INITIAL_PRESET_SESSIONS.map(s => ({ ...s, user_id: 'acc_rohan' }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
-    } else {
+    if (raw) {
       allSessions = JSON.parse(raw);
     }
-    return allSessions.filter((s: SessionRecord) => s.user_id === userId);
+    // Filter out mock sessions (which start with 'sn_') and keep only this user's sessions
+    return allSessions.filter((s: SessionRecord) => 
+      !s.session_id.startsWith('sn_') && s.user_id === userId
+    );
   } catch {
-    return INITIAL_PRESET_SESSIONS;
+    return [];
   }
 }
 
 function getAllStoredSessions(): SessionRecord[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : INITIAL_PRESET_SESSIONS.map(s => ({ ...s, user_id: 'acc_rohan' }));
+    const parsed = raw ? JSON.parse(raw) : [];
+    // Filter out mock sessions
+    return parsed.filter((s: SessionRecord) => !s.session_id.startsWith('sn_'));
   } catch {
     return [];
   }
@@ -93,7 +95,7 @@ export const sessionApi = {
 
     const newRecord: SessionRecord = {
       session_id: sessionId,
-      user_id: localStorage.getItem('synthnotes_user_id') || 'acc_rohan',
+      user_id: sessionStorage.getItem('synthnotes_user_id') || 'acc_rohan',
       title: inferredTitle.charAt(0).toUpperCase() + inferredTitle.slice(1),
       sources,
       created_at: new Date().toISOString(),
@@ -136,7 +138,7 @@ export const sessionApi = {
         topic_overlap_score: 0.38,
         status: 'low_overlap',
         message:
-          "Topic Overlap Is Low (38%): These documents don't appear to cover the same subject closely. SynthNotes merges multiple sources on one subject — please upload sources on the same topic, or continue anyway if you're sure.",
+          "Topic Overlap Is Low (38%): These documents don't appear to cover the same subject closely. SynthNotes merges multiple sources on one subject - please upload sources on the same topic, or continue anyway if you're sure.",
         detectedTopic: 'Mixed: Machine Learning & Relational Database Management',
         keySharedTerms: ['Data', 'Algorithms', 'Query'],
       };
@@ -228,4 +230,14 @@ export const sessionApi = {
     }
     saveStoredSessions(current);
   },
+
+  async generateChatResponse(sessionId: string, query: string, history: any[]): Promise<{text: string; citationSources?: string[]}> {
+    return fetchApi<{text: string; citationSources?: string[]}>(`/sessions/${sessionId}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, history }),
+    });
+  }
 };

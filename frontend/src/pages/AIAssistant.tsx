@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sessionApi } from '../services/sessionApi';
 import { useSession } from '../context/SessionContext';
 import {
   Brain,
@@ -25,8 +26,8 @@ interface ChatMessage {
 }
 
 export const AIAssistant: React.FC = () => {
-  const { currentNotes, currentSession, setActiveNav } = useSession();
-  const topicTitle = currentSession?.title || currentNotes?.topic_title || 'Gradient Descent Optimization';
+  const { currentNotes, currentSession, setActiveNav, currentUser } = useSession();
+  const topicTitle = currentSession?.title || currentNotes?.topic_title || 'Your Uploaded Documents';
   const sources = currentSession?.sources || [];
 
   const [inputMessage, setInputMessage] = useState('');
@@ -34,7 +35,7 @@ export const AIAssistant: React.FC = () => {
     {
       id: 'm1',
       sender: 'assistant',
-      text: `Hello Rohan! I am your SynthNotes AI Study Assistant. I have indexed your ${sources.length || 3} source documents on "${topicTitle}". Ask me any conceptual question, request exam practice problems, or ask for cross-source comparisons!`,
+      text: `Hello ${currentUser?.username || 'Student'}! I am your SynthNotes AI Study Assistant. I have indexed your ${sources.length || 3} source documents on "${topicTitle}". Ask me any conceptual question, request exam practice problems, or ask for cross-source comparisons!`,
       timestamp: 'Just now',
       citationSources: sources.map((s) => s.source_id),
     },
@@ -42,13 +43,13 @@ export const AIAssistant: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   const quickPrompts = [
-    'Explain the difference between Batch GD and SGD for an exam essay',
+    'Explain the core differences between the key concepts in these sources',
     'What did Textbook (S1) emphasize that Lecture Slides (S3) omitted?',
-    'Give me a mnemonic to remember the learning rate update step',
-    'Generate 3 high-yield formula review points',
+    'Give me a mnemonic to remember the most important definitions',
+    'Generate 3 high-yield review points for my upcoming exam',
   ];
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || inputMessage;
     if (!query.trim()) return;
 
@@ -59,35 +60,45 @@ export const AIAssistant: React.FC = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInputMessage('');
     setIsTyping(true);
 
-    // Realistic synthesis response grounding back to ingested sources
-    setTimeout(() => {
-      let reply = '';
-      const cited: string[] = ['S1', 'S2'];
-
-      if (query.toLowerCase().includes('batch') || query.toLowerCase().includes('sgd')) {
-        reply = `**Exam Comparative Breakdown: Batch vs SGD vs Mini-batch**\n\n- **Batch Gradient Descent [S1]**: Computes full gradient across all $N$ data instances before updating. Guaranteed smooth, monotonic descent trajectories on convex objectives, but memory-bound $O(N \\cdot d)$ per epoch.\n- **Stochastic Gradient Descent [S2]**: Single random sample update per iteration. Drastically reduces computational overhead and noisy trajectories actively help escape shallow saddle points and local minima.\n- **Mini-Batch GD [S1][S3]**: The modern industry standard ($b \\in [32, 256]$) which balances variance reduction with GPU parallel matrix math.`;
-      } else if (query.toLowerCase().includes('mnemonic') || query.toLowerCase().includes('remember')) {
-        reply = `Here is a high-yield exam mnemonic for gradient descent updates:\n\n**"STEP DOWN":**\n- **S**teepest descent vector (negate the gradient $-\\nabla J$)\n- **T**une step-size $\\eta$ (too big diverges, too small crawls)\n- **E**stimate error reduction per step\n- **P**arameter update $\\theta_{t+1} = \\theta_t - \\eta \\nabla J(\\theta_t)$\n\n*Grounded in textbook derivation [S1] & lecture notes [S2].*`;
-      } else {
-        reply = `Based on your synthesized notes for **${topicTitle}**:\n\nThe ingested documents consistently agree that gradient methods optimize the objective function along the direction of steepest instantaneous descent. \n\n- **Canonical Exam Term**: The algorithm is designated as *Steepest Descent* in textbook [S1] and *First-Order Optimizer* in slides [S3].\n- **Crucial Caution**: Standard first-order descent guarantees convergence to the global minimum strictly when the objective surface is strictly convex [S1].`;
+    try {
+      if (!currentSession?.session_id) {
+        throw new Error("No active session");
       }
+      
+      const response = await sessionApi.generateChatResponse(
+        currentSession.session_id,
+        query,
+        messages.map(m => ({ sender: m.sender, text: m.text }))
+      );
 
       setMessages((prev) => [
         ...prev,
         {
           id: `ast_${Date.now()}`,
           sender: 'assistant',
-          text: reply,
+          text: response.text,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          citationSources: cited,
+          citationSources: response.citationSources || [],
         },
       ]);
+    } catch (error: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ast_${Date.now()}`,
+          sender: 'assistant',
+          text: `Sorry, I encountered an error: ${error.message}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 650);
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-# SynthNotes — Frontend Architecture & Specifications
+# SynthNotes - Frontend Architecture & Specifications
 
 SynthNotes reconciles multiple learning resources on the same topic into one unified, exam-ready, source-attributed study document.
 

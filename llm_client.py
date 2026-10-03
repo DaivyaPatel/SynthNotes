@@ -19,8 +19,8 @@ def _generate_with_gemini(prompt: str, **kwargs) -> str:
         raise ValueError("GEMINI_API_KEY is not set.")
         
     genai.configure(api_key=api_key)
-    # Defaulting to gemini-1.5-flash as it's the current recommended fast model
-    model_name = kwargs.get("model", "gemini-1.5-flash")
+    # Defaulting to gemini-flash-latest as the current available model
+    model_name = kwargs.get("model", "gemini-flash-latest")
     model = genai.GenerativeModel(model_name)
     
     response = model.generate_content(prompt)

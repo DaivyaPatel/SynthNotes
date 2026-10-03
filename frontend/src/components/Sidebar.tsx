@@ -12,10 +12,11 @@ import {
   Layers,
   Sparkles,
   Bot,
+  LogOut,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { activeNav, setActiveNav, setIsAccountModalOpen, currentAccount } = useSession();
+  const { activeNav, setActiveNav, setIsAccountModalOpen, currentUser, logoutUser } = useSession();
 
   const navItems = [
     { key: 'home', label: 'Home', icon: Home },
@@ -113,30 +114,30 @@ export const Sidebar: React.FC = () => {
             &ldquo;Turn information overload into exam success.&rdquo;
           </p>
           <p className="text-[10px] text-[#94A3B8] mt-0.5">
-            — SynthNotes
+            - SynthNotes
           </p>
         </div>
 
         {/* Interactive Account Bar */}
         <div className="pt-3 border-t border-[#F1F5F9] space-y-2">
           <button
-            onClick={() => setIsAccountModalOpen(true)}
+            onClick={() => { if(window.confirm('Are you sure you want to log out?')) logoutUser(); }}
             className="w-full flex items-center justify-between p-2 rounded-xl bg-white hover:bg-[#F8FAFC] border border-transparent hover:border-[#E2E8F0] transition-all cursor-pointer text-left group"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#E0E7FF] text-[#4F46E5] flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-[#4F46E5] group-hover:text-white transition-colors">
-                {currentAccount.avatarInitial}
+                {currentUser?.username?.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
                 <span className="text-[13px] font-semibold text-[#1E293B] block truncate">
-                  {currentAccount.name}
+                  {currentUser?.username}
                 </span>
                 <span className="text-[10px] text-[#64748B] block truncate">
-                  {currentAccount.email}
+                  User
                 </span>
               </div>
             </div>
-            <ChevronDown className="w-4 h-4 text-[#94A3B8] shrink-0 group-hover:text-[#4F46E5] transition-colors" />
+            <LogOut className="w-4 h-4 text-[#94A3B8] shrink-0 group-hover:text-[#EF4444] transition-colors" />
           </button>
 
           <div className="flex items-center gap-2 px-1.5 text-[11px] text-[#64748B]">
@@ -144,7 +145,7 @@ export const Sidebar: React.FC = () => {
               🎓
             </span>
             <span className="font-medium text-[#475569]">
-              {currentAccount.role || 'Student Mode'}
+              Student Mode
             </span>
           </div>
         </div>

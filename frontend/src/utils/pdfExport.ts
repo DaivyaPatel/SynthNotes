@@ -36,7 +36,7 @@ function cleanPdfText(text: string): string {
     // Clean smart quotes & typographical dashes
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
-    .replace(/—/g, ' -- ')
+    .replace(/-/g, ' -- ')
     .replace(/–/g, ' - ')
     .replace(/…/g, '...')
     .replace(/\s+/g, ' ')

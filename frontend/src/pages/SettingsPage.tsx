@@ -18,7 +18,7 @@ import {
 import { Button } from '../components/Button';
 
 export const SettingsPage: React.FC = () => {
-  const { currentAccount, addNewAccount } = useSession();
+  const { currentUser } = useSession();
 
   // Active Tab state
   const [activeTab, setActiveTab] = useState<'synthesis' | 'curricula' | 'grounding' | 'profile'>('synthesis');
@@ -36,8 +36,8 @@ export const SettingsPage: React.FC = () => {
   const [crossSourceCheck, setCrossSourceCheck] = useState(true);
 
   // Student Profile State
-  const [studentName, setStudentName] = useState(currentAccount.name || 'Rohan Satkar');
-  const [studentEmail, setStudentEmail] = useState(currentAccount.email || 'rohansatkar04.sphs@gmail.com');
+  const [studentName, setStudentName] = useState(currentUser?.username || '');
+  const [studentEmail, setStudentEmail] = useState('');
   const [studyProgram, setStudyProgram] = useState('Computer Science & Machine Learning');
   const [studentModeEnabled, setStudentModeEnabled] = useState(true);
   const [examReminders, setExamReminders] = useState(true);

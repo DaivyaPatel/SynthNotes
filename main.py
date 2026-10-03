@@ -5,11 +5,12 @@ from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException, H
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
-from storage import get_engine, create_tables, create_session_and_register_files, get_session_sources, get_term_mapping
+from pydantic import BaseModel
+from storage import get_engine, create_tables, create_session_and_register_files, get_session_sources, get_term_mapping, create_user, authenticate_user
 from ingest import detect_file_type, validate_file, IngestionError, ingest_sources
 from terminology import normalize_terminology
 from salience import segment_content, score_salience
-from generate import generate_notes
+from generate import generate_notes, generate_chat_response
 from faithfulness import evaluate_notes_faithfulness
 from quiz import generate_quiz
 
@@ -34,6 +35,24 @@ create_tables(engine)
 
 # In-memory status tracking for simplicity
 job_status = {}
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/auth/signup")
+def signup(req: AuthRequest):
+    user_id = create_user(engine, req.username, req.password)
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    return {"user_id": user_id, "username": req.username}
+
+@app.post("/auth/login")
+def login(req: AuthRequest):
+    user_id = authenticate_user(engine, req.username, req.password)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    return {"user_id": user_id, "username": req.username}
 
 @app.post("/sessions")
 async def create_session(files: List[UploadFile] = File(...), x_user_id: str = Header(None)):
@@ -98,6 +117,45 @@ def _run_pipeline(session_id: str):
         topic = "Synthesized Topic"
         notes = generate_notes(ranked_units, canonical_map, topic)
         
+        # Build terminology_map for frontend CompareSources
+        term_map_frontend = []
+        reverse_map = {}
+        for orig, canon in canonical_map.items():
+            reverse_map.setdefault(canon, []).append(orig)
+        
+        for idx, (canon, origs) in enumerate(reverse_map.items()):
+            if len(origs) > 1: # Only show mapped terms with variants
+                variants = []
+                for orig in origs:
+                    for sid, terms in term_res["terms_by_source"].items():
+                        if orig in terms:
+                            variants.append({"source_id": sid, "term": orig})
+                            break
+                term_map_frontend.append({
+                    "id": f"tm_{idx}",
+                    "canonical": canon,
+                    "variants": variants
+                })
+        notes["terminology_map"] = term_map_frontend
+        
+        # Build source_contributions
+        total_units = len(ranked_units)
+        contributions = {}
+        if total_units > 0:
+            for u in ranked_units:
+                for sid in u.get("source_ids", []):
+                    contributions[sid] = contributions.get(sid, 0) + 1
+            
+            src_contribs = []
+            for sid, count in contributions.items():
+                # Approximation of percentage
+                pct = int(round((count / sum(contributions.values())) * 100))
+                src_contribs.append({"source_id": sid, "percentage": pct})
+            notes["source_contributions"] = src_contribs
+        else:
+            notes["source_contributions"] = []
+
+        
         # 5. Faithfulness
         job_status[session_id]["stage"] = "faithfulness"
         faithfulness_report = evaluate_notes_faithfulness(notes, ranked_units)
@@ -107,6 +165,8 @@ def _run_pipeline(session_id: str):
         job_status[session_id]["result"] = notes
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         job_status[session_id]["status"] = "failed"
         job_status[session_id]["error"] = str(e)
 
@@ -157,6 +217,32 @@ async def generate_quiz_endpoint(session_id: str):
     
     status["quiz"] = quiz
     return {"message": "Quiz generated successfully."}
+
+class ChatRequest(BaseModel):
+    query: str
+    history: list
+
+@app.post("/sessions/{session_id}/chat")
+async def chat_endpoint(session_id: str, req: ChatRequest):
+    sources_meta = get_session_sources(engine, session_id)
+    if not sources_meta:
+        raise HTTPException(status_code=404, detail="Session not found or has no sources.")
+        
+    filepaths = [Path("data/uploads") / session_id / src["filename"] for src in sources_meta]
+    try:
+        sources = ingest_sources([str(p) for p in filepaths])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load sources: {e}")
+        
+    for src, meta in zip(sources, sources_meta):
+        src["source_id"] = meta["source_id"]
+        
+    topic = "Synthesized Topic"
+    try:
+        response = generate_chat_response(req.query, req.history, sources, topic)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat generation failed: {e}")
 
 
 @app.get("/sessions/{session_id}/quiz")

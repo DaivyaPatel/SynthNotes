@@ -1,10 +1,10 @@
-# Tickets — SynthNotes Backend & Pipeline Implementation
+# Tickets - SynthNotes Backend & Pipeline Implementation
 
 Ordered by dependency. Each ticket has: description, acceptance criteria, dependencies, and notes for the agent. Feed these to Antigravity sequentially. Tickets marked **[P]** can be worked in parallel once their dependencies are met.
 
 ---
 
-## Epic 0 — Project Setup
+## Epic 0 - Project Setup
 
 ### T-00: Repository & Environment Scaffolding
 **Description:** Set up project structure, dependency management, and config baseline.
@@ -19,7 +19,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 1 — Ingestion (extend existing)
+## Epic 1 - Ingestion (extend existing)
 
 ### T-01: Harden Ingestion Module
 **Description:** Extend `ingest.py` with validation and error handling per PRD FR1 and Security doc.
@@ -42,7 +42,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 2 — Terminology Normalization (extend existing)
+## Epic 2 - Terminology Normalization (extend existing)
 
 ### T-03: Wrap Terminology Module as a Service
 **Description:** Refactor `terminology.py`'s functions to be callable as a pipeline stage (not just CLI), and persist the canonical mapping.
@@ -60,11 +60,11 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 - Script/notebook reporting precision/recall at threshold 0.70, 0.75, 0.80
 - Threshold decision documented with rationale in code comments or a short `docs/threshold_eval.md`
 **Dependencies:** T-03
-**Notes:** This produces the real evidence needed for the Result Analysis slide — do not skip in favor of only implementing the feature.
+**Notes:** This produces the real evidence needed for the Result Analysis slide - do not skip in favor of only implementing the feature.
 
 ---
 
-## Epic 3 — Salience Ranking (new — build from scratch)
+## Epic 3 - Salience Ranking (new - build from scratch)
 
 ### T-05: Content Unit Segmentation
 **Description:** Split normalized, merged source content into scoreable units (sentences or short paragraphs), tagged with originating source ID(s).
@@ -78,7 +78,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 **Acceptance Criteria:**
 - `score_salience(units: list[dict]) -> list[dict]` adds a `salience_score` field to each unit
 - Repetition signal: embedding-similarity clustering across units from different sources (reuse `sentence-transformers` model already in use)
-- Structural position signal: heading/definition detection heuristic (e.g., short units near a detected heading score higher) — document the heuristic explicitly
+- Structural position signal: heading/definition detection heuristic (e.g., short units near a detected heading score higher) - document the heuristic explicitly
 - Emphasis signal: PDF bold/italic metadata if extractable via `pdfplumber`, else a documented fallback (e.g., frequency of the sentence's key term)
 - Weights for combining the three signals are configurable constants, not magic numbers buried in logic
 - Unit tests: a repeated-across-sources unit scores higher than a unique, buried one on synthetic input
@@ -86,7 +86,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 4 — Grounded Generation (new — build from scratch)
+## Epic 4 - Grounded Generation (new - build from scratch)
 
 ### T-07: LLM Client Interface
 **Description:** Build the swappable LLM interface referenced in `04_AGENTS.md`.
@@ -118,7 +118,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 5 — Faithfulness Evaluation (new — build from scratch)
+## Epic 5 - Faithfulness Evaluation (new - build from scratch)
 
 ### T-10: NLI-Based Faithfulness Scorer
 **Description:** Implement PRD FR5 using a local NLI model.
@@ -132,7 +132,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 6 — Quiz Generation (new — build from scratch)
+## Epic 6 - Quiz Generation (new - build from scratch)
 
 ### T-11 [P]: Quiz Prompt & Generation Function
 **Description:** Implement PRD FR6.
@@ -146,17 +146,17 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 7 — API Layer
+## Epic 7 - API Layer
 
 ### T-12: FastAPI Endpoints
 **Description:** Expose the full pipeline via REST endpoints.
 **Acceptance Criteria:**
-- `POST /sessions` — create a session, accept file uploads (multipart), returns session ID
-- `POST /sessions/{id}/process` — triggers the pipeline (ingestion → normalization → salience → generation → faithfulness), runs as a background task, returns a job status endpoint
-- `GET /sessions/{id}/status` — returns current pipeline stage and completion status
-- `GET /sessions/{id}/notes` — returns generated detailed explanation + bullet notes + faithfulness report once ready
-- `POST /sessions/{id}/quiz` — triggers quiz generation from completed notes
-- `GET /sessions/{id}/quiz` — returns generated quiz
+- `POST /sessions` - create a session, accept file uploads (multipart), returns session ID
+- `POST /sessions/{id}/process` - triggers the pipeline (ingestion → normalization → salience → generation → faithfulness), runs as a background task, returns a job status endpoint
+- `GET /sessions/{id}/status` - returns current pipeline stage and completion status
+- `GET /sessions/{id}/notes` - returns generated detailed explanation + bullet notes + faithfulness report once ready
+- `POST /sessions/{id}/quiz` - triggers quiz generation from completed notes
+- `GET /sessions/{id}/quiz` - returns generated quiz
 - CORS restricted to the frontend dev origin per `03_SECURITY.md`
 - All inputs validated server-side (file types/sizes/session existence)
 - API tests via `pytest` + `httpx` covering the happy path and key error cases (invalid session, invalid file type, oversized file)
@@ -164,7 +164,7 @@ Ordered by dependency. Each ticket has: description, acceptance criteria, depend
 
 ---
 
-## Epic 8 — Evaluation & Evidence (for grading)
+## Epic 8 - Evaluation & Evidence (for grading)
 
 ### T-13: End-to-End Demo Script
 **Description:** A script/notebook that runs the full pipeline on at least two distinct topics/sample source sets and outputs results usable as evidence in the presentation (Slide 8 evidence, Slide 5/6 comparison table support).

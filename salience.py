@@ -66,7 +66,7 @@ def score_salience(units: list[dict]) -> list[dict]:
         return []
 
     texts = [u["text"] for u in units]
-    embeddings = embedder.encode(texts)
+    embeddings = embedder.encode(texts, batch_size=32)
     sim_matrix = cosine_similarity(embeddings)
 
     # 1. Repetition Signal

@@ -24,23 +24,7 @@ export const Home: React.FC = () => {
     searchQuery,
   } = useSession();
 
-  const exampleTopics = [
-    { name: 'Gradient Descent', id: 'gradient-descent' },
-    { name: 'Cell Division', id: 'cell-division' },
-    { name: 'Indian Polity', id: 'indian-polity' },
-    { name: 'Thermodynamics', id: 'thermodynamics' },
-    { name: 'Modern History', id: 'modern-history' },
-  ];
 
-  const handleSelectTopic = async (topicName: string) => {
-    await createSessionWithFiles([
-      { name: `${topicName.toLowerCase().replace(/\s+/g, '_')}_textbook_ch4.pdf`, size: 3200000, type: 'pdf' },
-      { name: `${topicName.toLowerCase().replace(/\s+/g, '_')}_lecture_notes.pdf`, size: 1100000, type: 'pdf' },
-      { name: `${topicName.toLowerCase().replace(/\s+/g, '_')}_slides.pdf`, size: 1400000, type: 'pdf' },
-    ], topicName);
-    await validateSources('valid');
-    setActiveNav('upload');
-  };
 
   const handleOpenNote = async (sessionId: string) => {
     await selectSession(sessionId);
@@ -68,7 +52,7 @@ export const Home: React.FC = () => {
             </h1>
 
             <p className="text-[13px] sm:text-sm text-[#475569] max-w-lg leading-relaxed">
-              Upload your books, notes, PDFs or links — our NLP engine synthesizes them into a clear, structured and exam-focused note.
+              Upload your books, notes, PDFs or links - our NLP engine synthesizes them into a clear, structured and exam-focused note.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -79,16 +63,6 @@ export const Home: React.FC = () => {
                 <Upload className="w-4 h-4 stroke-[2.2]" />
                 <span>Upload Materials</span>
                 <span className="text-base leading-none ml-0.5">→</span>
-              </button>
-
-              <button
-                onClick={() => setActiveNav('compare')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-[#1E293B] font-semibold text-[13px] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
-              >
-                <div className="w-5 h-5 rounded-full bg-[#4338CA] text-white flex items-center justify-center">
-                  <Play className="w-2.5 h-2.5 fill-white ml-0.5" />
-                </div>
-                <span>Watch How It Works</span>
               </button>
             </div>
           </div>
@@ -245,24 +219,6 @@ export const Home: React.FC = () => {
               Supported formats: PDF, PPT, DOCX, TXT (Max 100 MB each)
             </p>
           </div>
-
-          {/* Example Topics */}
-          <div className="pt-1">
-            <span className="text-xs font-semibold text-[#64748B] block mb-2">
-              Example Topics
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {exampleTopics.map((topic) => (
-                <button
-                  key={topic.id}
-                  onClick={() => handleSelectTopic(topic.name)}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-white border border-[#E2E8F0] text-[#334155] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors cursor-pointer"
-                >
-                  {topic.name}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Right Column (5 cols): Recent Notes */}
@@ -279,135 +235,44 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {/* Note 1: Gradient Descent */}
-            <div
-              onClick={() => handleOpenNote('sn_gradient_descent')}
-              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#0F172A] truncate group-hover:text-[#4F46E5]">
-                    Gradient Descent
-                  </p>
-                  <p className="text-[11px] text-[#94A3B8]">
-                    4 sources • 12 Sep 2026
-                  </p>
-                </div>
+            {filteredSessions.length > 0 ? (
+              filteredSessions.slice(0, 5).map((session) => {
+                const status = session.notes ? 'Completed' : 'Processing';
+                const statusColor = status === 'Completed' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#EFF6FF] text-[#2563EB]';
+                
+                return (
+                  <div
+                    key={session.session_id}
+                    onClick={() => handleOpenNote(session.session_id)}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-8 h-8 rounded-lg ${statusColor} flex items-center justify-center shrink-0`}>
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-[#0F172A] truncate group-hover:text-[#4F46E5]">
+                          {session.title}
+                        </p>
+                        <p className="text-[11px] text-[#94A3B8]">
+                          {session.sources?.length || 0} sources • {new Date(session.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full ${statusColor}`}>
+                        {status}
+                      </span>
+                      <MoreHorizontal className="w-4 h-4 text-[#94A3B8]" />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-4 text-center text-xs text-[#94A3B8]">
+                No recent notes found. Upload some study materials to get started!
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669]">
-                  Completed
-                </span>
-                <MoreHorizontal className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </div>
-
-            {/* Note 2: Cell Division */}
-            <div
-              onClick={() => handleOpenNote('sn_cell_division')}
-              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-[#ECFDF5] text-[#059669] flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#0F172A] truncate group-hover:text-[#4F46E5]">
-                    Cell Division
-                  </p>
-                  <p className="text-[11px] text-[#94A3B8]">
-                    3 sources • 10 Sep 2026
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669]">
-                  Completed
-                </span>
-                <MoreHorizontal className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </div>
-
-            {/* Note 3: Indian Polity */}
-            <div
-              onClick={() => handleOpenNote('sn_indian_polity')}
-              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-[#FEF2F2] text-[#DC2626] flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#0F172A] truncate group-hover:text-[#4F46E5]">
-                    Indian Polity
-                  </p>
-                  <p className="text-[11px] text-[#94A3B8]">
-                    5 sources • 08 Sep 2026
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669]">
-                  Completed
-                </span>
-                <MoreHorizontal className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </div>
-
-            {/* Note 4: Thermodynamics */}
-            <div
-              onClick={() => handleOpenNote('sn_thermodynamics')}
-              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#0F172A] truncate group-hover:text-[#4F46E5]">
-                    Thermodynamics
-                  </p>
-                  <p className="text-[11px] text-[#94A3B8]">
-                    2 sources • 05 Sep 2026
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB]">
-                  Processing
-                </span>
-                <MoreHorizontal className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </div>
-
-            {/* Note 5: Machine Learning Basics */}
-            <div
-              onClick={() => handleOpenNote('sn_gradient_descent')}
-              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#0F172A] truncate group-hover:text-[#4F46E5]">
-                    Machine Learning Basics
-                  </p>
-                  <p className="text-[11px] text-[#94A3B8]">
-                    6 sources • 01 Sep 2026
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669]">
-                  Completed
-                </span>
-                <MoreHorizontal className="w-4 h-4 text-[#94A3B8]" />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Hand-drawn study slogan at the bottom right */}

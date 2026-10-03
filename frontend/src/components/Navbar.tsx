@@ -3,7 +3,7 @@ import { useSession } from '../context/SessionContext';
 import { Search, Bell, ChevronDown } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { searchQuery, setSearchQuery, setIsAccountModalOpen, currentAccount } = useSession();
+  const { searchQuery, setSearchQuery, setIsAccountModalOpen, currentUser, logoutUser, setActiveNav } = useSession();
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
@@ -51,14 +51,16 @@ export const Navbar: React.FC = () => {
         {/* Working Account dropdown button */}
         <button
           type="button"
-          onClick={() => setIsAccountModalOpen(true)}
+          onClick={() => setActiveNav('settings')}
           className="flex items-center gap-1.5 p-1 rounded-full hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
-          title="Manage & Switch Accounts"
+          title="Account Settings"
         >
           <div className="w-8 h-8 rounded-full bg-[#4F46E5] text-white flex items-center justify-center font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
-            {currentAccount.avatarInitial}
+            {currentUser?.username?.charAt(0).toUpperCase()}
           </div>
-          <ChevronDown className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#4F46E5] transition-colors" />
+          <span className="text-xs font-semibold text-[#64748B] group-hover:text-[#4F46E5] transition-colors pr-2">
+            Settings
+          </span>
         </button>
       </div>
     </header>

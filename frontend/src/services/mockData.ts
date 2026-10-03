@@ -233,7 +233,7 @@ export const GRADIENT_DESCENT_QUIZ: QuizQuestion[] = [
     id: 'q_4',
     type: 'short_answer',
     question: 'Briefly explain why terminology normalization is critical when consolidating multiple study resources on optimization.',
-    sample_answer: 'Different textbooks and professors use divergent notations for the identical concept—such as "step size α" vs "learning rate η", or "cost function J(θ)" vs "objective criterion L(w)". Without normalization, notes create cognitive friction and false distinctions.',
+    sample_answer: 'Different textbooks and professors use divergent notations for the identical concept-such as "step size α" vs "learning rate η", or "cost function J(θ)" vs "objective criterion L(w)". Without normalization, notes create cognitive friction and false distinctions.',
     key_points: [
       'Resolves notation discrepancies (α vs η, J(θ) vs Loss)',
       'Prevents confusing identical mathematical algorithms as distinct techniques',

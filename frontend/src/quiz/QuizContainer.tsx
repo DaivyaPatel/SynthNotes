@@ -75,7 +75,7 @@ export const QuizContainer: React.FC = () => {
               Test Yourself On These Notes
             </h2>
             <p className="text-xs sm:text-sm text-[#5A5A5A] mt-1 max-w-xl">
-              Questions are generated only from your synthesized notes — not the raw sources — so terminology stays consistent with what you just studied.
+              Questions are generated only from your synthesized notes - not the raw sources - so terminology stays consistent with what you just studied.
             </p>
           </div>
 

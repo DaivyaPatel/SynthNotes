@@ -75,23 +75,10 @@ export const CompareSources: React.FC = () => {
               <div className="space-y-2 text-xs">
                 <div className="p-2.5 rounded-lg bg-[#F8F9F7] border border-[#E4E7E2]">
                   <span className="text-[10px] font-semibold text-[#8A94A6] block uppercase tracking-wider">
-                    Primary Academic Focus:
+                    Role in Synthesis:
                   </span>
                   <span className="text-[#2E2E2E] font-medium mt-0.5 block">
-                    {idx === 0
-                      ? 'Theoretical mathematical proofs, bounds & asymptotic convergence'
-                      : idx === 1
-                      ? 'Practical implementation heuristics, step-size tuning & batching'
-                      : 'Visual intuition, landscape geometry & architectural comparisons'}
-                  </span>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-[#F8F9F7] border border-[#E4E7E2]">
-                  <span className="text-[10px] font-semibold text-[#8A94A6] block uppercase tracking-wider">
-                    Preferred Terminology:
-                  </span>
-                  <span className="text-[#5B7C73] font-mono font-semibold text-[11px] mt-0.5 block">
-                    {idx === 0 ? 'Steepest Descent, Cost Function J(θ)' : idx === 1 ? 'Step Size α, Gradient Method' : 'First-Order Optimizer, Loss Surface'}
+                    {percent > 50 ? 'Primary concept source' : percent > 20 ? 'Supporting detail & context' : 'Minor reference'}
                   </span>
                 </div>
               </div>
@@ -122,19 +109,27 @@ export const CompareSources: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E4E7E2]">
-              {terminology.map((tm) => (
-                <tr key={tm.id} className="hover:bg-[#F8F9F7]/60">
-                  <td className="p-3 font-bold text-[#2E2E2E]">{tm.canonical}</td>
-                  {sources.map((s) => {
-                    const match = tm.variants.find((v) => v.source_id === s.source_id);
-                    return (
-                      <td key={s.source_id} className="p-3 font-mono text-[11px] text-[#5B7C73]">
-                        {match ? `"${match.term}"` : '—'}
-                      </td>
-                    );
-                  })}
+              {terminology.length === 0 ? (
+                <tr>
+                  <td colSpan={sources.length + 1} className="p-4 text-center text-xs text-[#8A94A6]">
+                    No terminology variations detected across the provided sources.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                terminology.map((tm) => (
+                  <tr key={tm.id} className="hover:bg-[#F8F9F7]/60">
+                    <td className="p-3 font-bold text-[#2E2E2E]">{tm.canonical}</td>
+                    {sources.map((s) => {
+                      const match = tm.variants.find((v) => v.source_id === s.source_id);
+                      return (
+                        <td key={s.source_id} className="p-3 font-mono text-[11px] text-[#5B7C73]">
+                          {match ? `"${match.term}"` : '-'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

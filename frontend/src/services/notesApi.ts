@@ -9,25 +9,27 @@ export const notesApi = {
     const session = await sessionApi.getSession(sessionId);
 
     // Map detailed explanation to DetailedSection format
+    const rawDetailed = Array.isArray(backendNotes.detailed_explanation) ? backendNotes.detailed_explanation : [];
     const detailedSections: DetailedSection[] = [
       {
         heading: "Synthesized Explanation",
-        statements: (backendNotes.detailed_explanation || []).map((s: any, idx: number) => ({
+        statements: rawDetailed.map((s: any, idx: number) => ({
           id: `ds_gen_${idx}`,
-          text: s.statement,
-          source_ids: s.source_ids || [],
-          faithfulness_score: s.nli_score || 0.95,
+          text: s.statement || s.text || (typeof s === 'string' ? s : JSON.stringify(s)),
+          source_ids: Array.isArray(s.source_ids) ? s.source_ids : [],
+          faithfulness_score: s.nli_score !== undefined ? s.nli_score : 0.95,
         })),
       },
     ];
 
     // Map revision notes to bullet notes format
-    const bulletNotes = (backendNotes.revision_notes || []).map((b: any, idx: number) => ({
+    const rawBullets = Array.isArray(backendNotes.revision_notes) ? backendNotes.revision_notes : [];
+    const bulletNotes = rawBullets.map((b: any, idx: number) => ({
       id: `bn_gen_${idx}`,
-      label: 'Key Point',
-      text: b.bullet,
-      source_ids: b.source_ids || [],
-      importance: 'high' as const,
+      label: b.label || (b.importance === 'critical' ? 'CRITICAL' : 'CONCEPT'),
+      text: b.bullet || b.text || (typeof b === 'string' ? b : JSON.stringify(b)),
+      source_ids: Array.isArray(b.source_ids) ? b.source_ids : [],
+      importance: (b.importance === 'critical' ? 'critical' : 'normal') as 'critical' | 'normal',
     }));
 
     // Map faithfulness report
@@ -48,15 +50,20 @@ export const notesApi = {
       topic_title: session?.title || 'Synthesized Study Topic',
       subject_category: 'Exam Synthesis',
       created_at: new Date().toISOString(),
-      source_contributions: session?.sources?.map(s => ({
-        source_id: s.source_id,
-        filename: s.filename,
-        percentage: s.contributionPercent || 0,
-        statementCount: 10
-      })) || [],
+      source_contributions: Array.isArray(backendNotes.source_contributions) 
+        ? backendNotes.source_contributions.map((sc: any) => {
+            const src = session?.sources?.find(s => s.source_id === sc.source_id);
+            return {
+              source_id: sc.source_id || 'unknown',
+              filename: src?.filename || sc.source_id || 'Unknown Source',
+              percentage: sc.percentage || 0,
+              statementCount: sc.percentage || 0 // approximation
+            };
+          })
+        : [],
       detailed_sections: detailedSections,
       bullet_notes: bulletNotes,
-      terminology_map: [], // Terminology mapping not currently exposed in notes endpoint
+      terminology_map: backendNotes.terminology_map || [],
       faithfulness: {
         overall_score: fReport.average_nli_score || 0.9,
         total_statements: fReport.total_statements || 0,

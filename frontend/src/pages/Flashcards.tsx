@@ -24,48 +24,28 @@ interface Flashcard {
 }
 
 export const Flashcards: React.FC = () => {
-  const { currentNotes, currentSession, setActiveNav } = useSession();
+  const { currentNotes, currentSession, currentQuiz, setActiveNav } = useSession();
   const topicTitle = currentSession?.title || currentNotes?.topic_title || 'Gradient Descent Optimization';
 
-  const defaultCards: Flashcard[] = [
-    {
-      id: 'fc_1',
-      category: 'Core Definition',
-      front: 'What is the standard parameter update rule in Gradient Descent?',
-      back: 'θ_{t+1} = θ_t - η · ∇J(θ_t), where η is the learning rate and ∇J(θ_t) is the negative gradient vector pointing towards the steepest local decrease.',
-      source: 'S1 & S2',
-    },
-    {
-      id: 'fc_2',
-      category: 'Terminology Discrepancy',
-      front: 'What alias does Textbook [S1] use for Gradient Descent?',
-      back: '"Steepest Descent". Both terms describe the identical mathematical first-order optimization method for differentiable continuous loss functions.',
-      source: 'S1: ml_textbook_ch4.pdf',
-    },
-    {
-      id: 'fc_3',
-      category: 'Comparative Tradeoff',
-      front: 'Why does Stochastic Gradient Descent (SGD) escape local minima better than Batch GD?',
-      back: 'SGD computes the gradient from a single random sample per iteration, introducing noise and stochastic fluctuations that dislodge iterates from shallow saddle points and local minima.',
-      source: 'S2 & S3',
-    },
-    {
-      id: 'fc_4',
-      category: 'Exam Pitfall',
-      front: 'Under what condition does gradient descent guarantee global convergence?',
-      back: 'Convergence to the absolute global minimum is mathematically guaranteed ONLY for strictly convex functions. On non-convex deep learning loss surfaces, it can settle in local sub-optima or saddle points.',
-      source: 'S1: Optimization Foundations',
-    },
-    {
-      id: 'fc_5',
-      category: 'Momentum Dynamics',
-      front: 'How does classical Momentum alleviate oscillations in ill-conditioned ravines?',
-      back: 'By calculating an exponential moving average of past gradients: v_t = γ v_{t-1} + η ∇J(θ_t). Perpendicular oscillations cancel out while forward directional velocity is accelerated.',
-      source: 'S2 & S3',
-    },
-  ];
+  const [cards, setCards] = useState<Flashcard[]>([]);
 
-  const [cards, setCards] = useState<Flashcard[]>(defaultCards);
+  React.useEffect(() => {
+    if (currentQuiz && currentQuiz.length > 0) {
+      setCards(
+        currentQuiz.map((q, idx) => ({
+          id: `fc_${idx}`,
+          category: 'Quiz Concept',
+          front: q.question,
+          back: `${q.explanation}\n\nAnswer: ${q.answer}`,
+          source: q.source_ids.join(', '),
+        }))
+      );
+    } else {
+      setCards([]);
+    }
+  }, [currentQuiz]);
+
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [knownCount, setKnownCount] = useState(0);
@@ -106,6 +86,18 @@ export const Flashcards: React.FC = () => {
     setReviewCount((prev) => prev + 1);
     handleNext();
   };
+
+  if (cards.length === 0) {
+    return (
+      <div className="w-full max-w-3xl mx-auto space-y-6 pb-16 font-sans text-center mt-20">
+        <h2 className="text-2xl font-bold text-[#0F172A]">No Flashcards Available</h2>
+        <p className="text-[#64748B]">Please generate a quiz for this session first to access flashcards.</p>
+        <Button variant="primary" onClick={() => setActiveNav('home')}>
+          Back to Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6 pb-16 font-sans">

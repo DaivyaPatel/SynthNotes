@@ -34,7 +34,7 @@ export const TopicOverlapWarning: React.FC<TopicOverlapWarningProps> = ({
           </div>
 
           <p className="text-sm text-[#5A5A5A] mt-2 leading-relaxed">
-            These documents don&apos;t appear to cover the same topic closely. SynthNotes merges multiple sources on one subject — please upload sources on the same topic, or continue anyway if you&apos;re sure.
+            These documents don&apos;t appear to cover the same topic closely. SynthNotes merges multiple sources on one subject - please upload sources on the same topic, or continue anyway if you&apos;re sure.
           </p>
 
           {validation.detectedTopic && (

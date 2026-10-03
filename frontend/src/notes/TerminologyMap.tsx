@@ -84,7 +84,7 @@ export const TerminologyMap: React.FC<TerminologyMapProps> = ({ items }) => {
                           <div className="flex items-center gap-1.5 truncate">
                             <span className="font-semibold">&ldquo;{v.term}&rdquo;</span>
                             <span className="text-[#8A94A6] text-[11px] truncate">
-                              — in {sourceName}
+                              - in {sourceName}
                             </span>
                           </div>
                           <SourceBadge sourceId={v.source_id} />

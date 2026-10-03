@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://127.0.0.1:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export class ApiError extends Error {
   statusCode?: number;
@@ -15,12 +15,16 @@ export class ApiError extends Error {
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   try {
-    const userId = localStorage.getItem('synthnotes_user_id') || 'acc_rohan';
+    const userId = sessionStorage.getItem('synthnotes_user_id') || 'acc_rohan';
     
     const headers = new Headers(options?.headers);
     headers.set('X-User-Id', userId);
     
-    const response = await fetch(url, { ...options, headers });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
+    const response = await fetch(url, { ...options, headers, signal: controller.signal });
+    clearTimeout(timeoutId);
     
     const text = await response.text();
     let data;

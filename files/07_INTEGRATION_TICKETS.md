@@ -1,4 +1,4 @@
-# Epic 9 — Frontend & Backend Integration
+# Epic 9 - Frontend & Backend Integration
 
 This epic covers the steps to replace the frontend's mock data services with actual network requests to the FastAPI backend, achieving a fully working end-to-end application.
 

@@ -46,12 +46,11 @@ interface SessionContextType {
   setSearchQuery: (query: string) => void;
 
   // Multi-Account Management
-  accounts: UserAccount[];
-  currentAccount: UserAccount;
+  currentUser: { id: string; username: string } | null;
   isAccountModalOpen: boolean;
   setIsAccountModalOpen: (open: boolean) => void;
-  switchAccount: (accountId: string) => void;
-  addNewAccount: (account: UserAccount) => void;
+  loginUser: (id: string, username: string) => void;
+  logoutUser: () => void;
 }
 
 const DEFAULT_ACCOUNTS: UserAccount[] = [
@@ -82,7 +81,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>('sn_gradient_descent');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentSession, setCurrentSession] = useState<SessionRecord | null>(null);
   const [currentNotes, setCurrentNotes] = useState<NotesData | null>(null);
   const [currentQuiz, setCurrentQuiz] = useState<QuizQuestion[] | null>(null);
@@ -96,13 +95,8 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [activeNav, setActiveNav] = useState<string>('home');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Accounts state
-  const [accounts, setAccounts] = useState<UserAccount[]>(DEFAULT_ACCOUNTS);
-  const [currentAccount, setCurrentAccount] = useState<UserAccount>(() => {
-    const saved = localStorage.getItem('synthnotes_user_id');
-    return DEFAULT_ACCOUNTS.find(a => a.id === saved) || DEFAULT_ACCOUNTS[0];
-  });
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(true);
 
   const loadSessions = async () => {
     const list = await sessionApi.getSessions();
@@ -220,12 +214,13 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         currentSession.faithfulness_score = notes.faithfulness?.overall_score || 0;
         sessionApi.saveSession(currentSession);
       }
+      setActiveNav('notes');
     } catch (e) {
       console.error("Pipeline error:", e);
+      setPipelineStatusMessage("Error: Pipeline processing failed.");
     } finally {
       setIsProcessing(false);
       await loadSessions();
-      setActiveNav('notes');
     }
   };
 
@@ -252,20 +247,21 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     setActiveNav('upload');
   };
 
-  const switchAccount = (accountId: string) => {
-    const acc = accounts.find((a) => a.id === accountId);
-    if (acc) {
-      setCurrentAccount(acc);
-      localStorage.setItem('synthnotes_user_id', acc.id);
-      loadSessions(); // Reload sessions for this new user
-    }
+  const loginUser = (id: string, username: string) => {
+    setCurrentUser({ id, username });
+    sessionStorage.setItem('synthnotes_user_id', id);
+    sessionStorage.setItem('synthnotes_username', username);
+    setIsAccountModalOpen(false);
+    loadSessions(); // Reload sessions for this new user
   };
 
-  const addNewAccount = (acc: UserAccount) => {
-    setAccounts((prev) => [...prev, acc]);
-    setCurrentAccount(acc);
-    localStorage.setItem('synthnotes_user_id', acc.id);
-    loadSessions();
+  const logoutUser = () => {
+    setCurrentUser(null);
+    sessionStorage.removeItem('synthnotes_user_id');
+    sessionStorage.removeItem('synthnotes_username');
+    setSessions([]);
+    setCurrentSessionId(null);
+    setIsAccountModalOpen(true);
   };
 
   return (
@@ -295,12 +291,11 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         resetToUpload,
         searchQuery,
         setSearchQuery,
-        accounts,
-        currentAccount,
+        currentUser,
         isAccountModalOpen,
         setIsAccountModalOpen,
-        switchAccount,
-        addNewAccount,
+        loginUser,
+        logoutUser,
       }}
     >
       {children}

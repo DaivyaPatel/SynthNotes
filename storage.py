@@ -6,7 +6,52 @@ from pathlib import Path
 from sqlalchemy import create_engine, Column, String, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
+import hashlib
+from sqlalchemy.exc import IntegrityError
 Base = declarative_base()
+
+class UserModel(Base):
+    __tablename__ = 'users'
+    id = Column(String, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def create_user(engine, username, password):
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = SessionLocal()
+    try:
+        user_id = str(uuid.uuid4())
+        new_user = UserModel(
+            id=user_id,
+            username=username,
+            password_hash=hash_password(password)
+        )
+        db.add(new_user)
+        db.commit()
+        return user_id
+    except IntegrityError:
+        db.rollback()
+        return None
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
+def authenticate_user(engine, username, password):
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = SessionLocal()
+    try:
+        user = db.query(UserModel).filter(UserModel.username == username).first()
+        if user and user.password_hash == hash_password(password):
+            return user.id
+        return None
+    finally:
+        db.close()
 
 
 class SessionModel(Base):

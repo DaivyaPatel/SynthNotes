@@ -39,13 +39,16 @@ def detect_file_type(path: Path) -> str:
     if header.startswith(b'%PDF-'):
         return '.pdf'
     
-    # If not a PDF, attempt to read as utf-8 text
+    if header.startswith(b'PK\x03\x04') and path.name.lower().endswith('.docx'):
+        return '.docx'
+    
+    # If not a PDF or DOCX, attempt to read as utf-8 text
     try:
         with open(path, 'r', encoding='utf-8') as f:
             f.read(1024)
         return '.txt'
     except UnicodeDecodeError:
-        raise IngestionError(f"Unsupported or corrupted file content for {path.name}. Only valid PDF and TXT are supported.")
+        raise IngestionError(f"Unsupported or corrupted file content for {path.name}. Only valid PDF, DOCX, and TXT are supported.")
 
 
 def load_source(filepath: str) -> str:
@@ -79,6 +82,17 @@ def load_source(filepath: str) -> str:
             return extracted
         except Exception as e:
             raise IngestionError(f"Failed to read text file {path.name}. Error: {e}")
+
+    elif file_type == ".docx":
+        try:
+            import docx
+            doc = docx.Document(path)
+            extracted = "\n".join([para.text for para in doc.paragraphs]).strip()
+            if not extracted:
+                raise IngestionError(f"No readable text found in DOCX {path.name}.")
+            return extracted
+        except Exception as e:
+            raise IngestionError(f"Failed to read DOCX {path.name}. Error: {e}")
 
 
 def ingest_sources(filepaths: list[str]) -> list[dict]:

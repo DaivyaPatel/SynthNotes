@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-## SynthNotes — Transforming Multiple Learning Resources into Unified Exam-Ready Notes
+## SynthNotes - Transforming Multiple Learning Resources into Unified Exam-Ready Notes
 
 **Team:** Rohan Sanjay Satkar (32), Bhavisha Bhanushali (34)
 **Mentor:** Dr. Vaqar Ansari
@@ -10,7 +10,7 @@
 
 ## 1. Problem Statement
 
-Students studying a single topic typically consult multiple learning resources — textbooks, lecture notes, slide decks, and reference books. These sources:
+Students studying a single topic typically consult multiple learning resources - textbooks, lecture notes, slide decks, and reference books. These sources:
 
 - Use inconsistent terminology for the same concept (e.g., "Gradient Descent" vs "Steepest Descent")
 - Repeat content across sources without adding value
@@ -54,44 +54,44 @@ Undergraduate/postgraduate students revising for exams from 2+ heterogeneous sou
 
 ## 6. Functional Requirements
 
-### FR1 — Ingestion
+### FR1 - Ingestion
 - Accept PDF and TXT uploads (multi-file per session)
 - Extract text per file, preserving source-ID mapping
 - Reject/flag corrupted or unreadable files with a clear error, not a silent failure
 
-### FR2 — Terminology Normalization
+### FR2 - Terminology Normalization
 - Extract candidate domain terms per source
 - Cluster semantically similar terms across sources into canonical groups using embedding similarity
 - Persist and expose the canonical mapping (term → canonical form) for downstream stages and for UI display (e.g., "also referred to as: ...")
 
-### FR3 — Salience Ranking
+### FR3 - Salience Ranking
 - Score merged content units (sentences/paragraphs) using: cross-source repetition, structural position (heading/definition vs. body), and emphasis signals in original text
 - Output a ranked list of content units usable for prioritizing the final notes
 
-### FR4 — Grounded Source-Attributed Generation
+### FR4 - Grounded Source-Attributed Generation
 - Merge normalized, ranked content into one coherent explanation
 - Every generated statement must carry a reference to the source ID(s) it was derived from
 - Output both a detailed explanation and condensed bullet-point revision notes
 
-### FR5 — Faithfulness Evaluation
+### FR5 - Faithfulness Evaluation
 - For each generated statement, run an NLI check against its cited source text (entailment vs. contradiction vs. neutral)
 - Compute and expose a per-statement and an overall faithfulness score
 - Flag statements below a configurable faithfulness threshold for manual review
 
-### FR6 — Quiz Generator
+### FR6 - Quiz Generator
 - Generate MCQs, fill-in-the-blank, short-answer, and long-answer questions from the synthesized notes (never from raw sources directly)
 - Maintain terminology consistency between quiz and notes (reuse canonical terms from FR2)
 
-### FR7 — Conflict/Overlap Visualization (optional/stretch)
+### FR7 - Conflict/Overlap Visualization (optional/stretch)
 - Visualize where sources overlap vs. diverge on a given sub-topic
 
-### FR8 — Session & Output Management
+### FR8 - Session & Output Management
 - Persist a user's session (sources, generated notes, quiz, faithfulness report)
 - Allow export of notes (PDF/Markdown minimum)
 
 ## 7. Non-Functional Requirements
 
-- **Latency:** end-to-end pipeline run on a typical topic (2–4 sources, ~5–10 pages each) should complete within an acceptable synchronous or async-with-progress window — define target once infra is chosen (see Tech Stack doc)
+- **Latency:** end-to-end pipeline run on a typical topic (2–4 sources, ~5–10 pages each) should complete within an acceptable synchronous or async-with-progress window - define target once infra is chosen (see Tech Stack doc)
 - **Reliability:** pipeline failures at any stage must degrade gracefully (return partial output + error, never a silent wrong answer)
 - **Transparency:** every claim in the output must be traceable to a source; this is a correctness requirement, not a nice-to-have
 - **Auditability:** faithfulness scores and flagged statements must be inspectable, not just aggregated
@@ -100,8 +100,8 @@ Undergraduate/postgraduate students revising for exams from 2+ heterogeneous sou
 ## 8. Known Limitations (to state explicitly, not hide)
 
 - Output quality depends on input quality (garbled extraction → garbled notes)
-- No figure/diagram understanding — text only
-- No OCR — scanned PDFs unsupported
+- No figure/diagram understanding - text only
+- No OCR - scanned PDFs unsupported
 - Genuine factual contradictions between sources are flagged, not resolved, by the system
 
 ## 9. Future Scope (post mid-term / post-submission)
