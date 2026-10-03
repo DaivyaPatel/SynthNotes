@@ -32,12 +32,12 @@ export const Flashcards: React.FC = () => {
   React.useEffect(() => {
     if (currentQuiz && currentQuiz.length > 0) {
       setCards(
-        currentQuiz.map((q, idx) => ({
+        currentQuiz.map((q: any, idx) => ({
           id: `fc_${idx}`,
           category: 'Quiz Concept',
           front: q.question,
-          back: `${q.explanation}\n\nAnswer: ${q.answer}`,
-          source: q.source_ids.join(', '),
+          back: `${q.explanation || ''}\n\nAnswer: ${q.correct_answer || q.sample_answer || 'See explanation'}`,
+          source: q.source_ids?.join(', ') || q.source_reference || 'Synthesized Notes',
         }))
       );
     } else {
