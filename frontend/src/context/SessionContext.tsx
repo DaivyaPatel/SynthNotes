@@ -193,7 +193,8 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
           isDone = true;
           if (statusRes.status === 'failed') {
             console.error("Pipeline failed on backend");
-            setIsProcessing(false);
+            setPipelineStatusMessage(`ERROR: Pipeline failed. Check your document size or API keys. (Backend says: Failed)`);
+            // Do not set isProcessing(false) here so the user can read the error!
             return;
           }
         } else {
@@ -215,11 +216,12 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         sessionApi.saveSession(currentSession);
       }
       setActiveNav('notes');
+      setIsProcessing(false); // Set it here when successfully done
     } catch (e) {
       console.error("Pipeline error:", e);
       setPipelineStatusMessage("Error: Pipeline processing failed.");
     } finally {
-      setIsProcessing(false);
+      // Do NOT call setIsProcessing(false) here, otherwise errors are silently hidden
       await loadSessions();
     }
   };

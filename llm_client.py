@@ -83,7 +83,7 @@ def generate(prompt: str, **kwargs) -> str:
     
     # Auto-detect Groq if they pasted a Groq key instead of Gemini
     if provider == "gemini":
-        gemini_key = os.getenv("GEMINI_API_KEY", "")
+        gemini_key = os.getenv("GEMINI_API_KEY", "").strip(" '\"")
         if gemini_key.startswith("gsk_") or os.getenv("GROQ_API_KEY"):
             provider = "groq"
 
