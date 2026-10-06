@@ -48,7 +48,7 @@ def _generate_with_claude(prompt: str, **kwargs) -> str:
     raise NotImplementedError("Claude provider is not yet fully implemented in v1.")
 
 def _generate_with_groq(prompt: str, **kwargs) -> str:
-    import requests
+    import httpx
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         api_key = os.getenv("GEMINI_API_KEY")
@@ -68,10 +68,11 @@ def _generate_with_groq(prompt: str, **kwargs) -> str:
         "messages": [{"role": "user", "content": prompt}]
     }
     
-    response = requests.post(url, headers=headers, json=payload)
-    response.raise_for_status()
-    data = response.json()
-    return data["choices"][0]["message"]["content"]
+    with httpx.Client(timeout=60.0) as client:
+        response = client.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
 
 def generate(prompt: str, **kwargs) -> str:
     """

@@ -65,17 +65,20 @@ NOTES:
     return prompt
 
 def _parse_json_output(raw_text: str) -> dict:
-    clean_text = raw_text.strip()
-    if clean_text.startswith("```json"):
-        clean_text = clean_text[7:]
-    elif clean_text.startswith("```"):
-        clean_text = clean_text[3:]
-        
-    if clean_text.endswith("```"):
-        clean_text = clean_text[:-3]
-        
-    clean_text = clean_text.strip()
-    
+    import re
+    # Try to find JSON block using regex if conversational filler exists
+    json_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', raw_text)
+    if json_match:
+        clean_text = json_match.group(1).strip()
+    else:
+        # Fallback to finding the first { and last }
+        start_idx = raw_text.find('{')
+        end_idx = raw_text.rfind('}')
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            clean_text = raw_text[start_idx:end_idx+1].strip()
+        else:
+            clean_text = raw_text.strip()
+            
     parsed = json.loads(clean_text)
     if "quiz" not in parsed:
         raise ValueError("JSON missing required top-level 'quiz' key.")
